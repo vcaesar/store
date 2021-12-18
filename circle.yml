@@ -1,0 +1,16 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: golang:1.17.5
+    working_directory: /gopath/src/github.com/vcaesar/store
+    steps:
+      - checkout
+      # - run:
+      # specify any bash command here prefixed with `run: `
+      - run: go get -v -t -d ./...
+      - run: go test -v ./...
+      # codecov.io
+      - run: go test -v -covermode=count -coverprofile=coverage.out
+      - run: bash <(curl -s https://codecov.io/bash)
