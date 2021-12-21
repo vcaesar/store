@@ -147,3 +147,37 @@ func (s *Badger) ForEach(fn func(k, v []byte) error) error {
 func (s *Badger) Close() error {
 	return s.db.Close()
 }
+
+// NewBatch create a db batch
+func (s *Badger) NewBatch() error {
+	s.batch = s.db.NewWriteBatch()
+	return nil
+}
+
+// BatchSet sets the provided value for a given key with batch
+func (s *Badger) BatchSet(k, v []byte) error {
+	return s.batch.Set(k, v)
+}
+
+// BatchDelete deletes a key with batch
+func (s *Badger) BatchDelete(k []byte) error {
+	return s.batch.Delete(k)
+}
+
+// Write written the batch data to db
+func (s *Badger) Write(sync ...bool) error {
+	if len(sync) > 0 {
+		err := s.db.Sync()
+		if err != nil {
+			return err
+		}
+	}
+
+	return s.batch.Flush()
+}
+
+// BatchClose close the db batch
+func (s *Badger) BatchClose() error {
+	s.batch.Cancel()
+	return nil
+}

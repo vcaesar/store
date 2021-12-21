@@ -26,6 +26,7 @@ import (
 type Bolt struct {
 	db      *bolt.DB
 	DefPath []byte
+	Arr     []Batch
 }
 
 // OpenBolt open the Bolt store
@@ -44,7 +45,7 @@ func OpenBolt(dbPath string) (Store, error) {
 		db.Close()
 		return nil, err
 	}
-	return &Bolt{db, bucket}, nil
+	return &Bolt{db, bucket, []Batch{}}, nil
 }
 
 // WALName returns the path to currently open database file.
@@ -113,4 +114,51 @@ func (s *Bolt) ForEach(fn func(k, v []byte) error) error {
 // must be closed before closing the database.
 func (s *Bolt) Close() error {
 	return s.db.Close()
+}
+
+// NewBatch init the db batch
+func (s *Bolt) NewBatch() error {
+	return nil
+}
+
+// BatchSet add k, v to the batch
+func (s *Bolt) BatchSet(k, v []byte) error {
+	s.Arr = append(s.Arr, Batch{K: k, V: v, Kind: 1})
+	return nil
+}
+
+// BatchDelete delete a key in the batch
+func (s *Bolt) BatchDelete(k []byte) error {
+	s.Arr = append(s.Arr, Batch{K: k, Kind: 0})
+	return nil
+}
+
+// Write write the batch data to db
+func (s *Bolt) Write(sync ...bool) error {
+	return s.db.Batch(func(t *bolt.Tx) error {
+		// return t.Commit()
+		tx := t.Bucket(s.DefPath)
+		for _, v := range s.Arr {
+			if v.Kind == 0 {
+				err := tx.Delete(v.K)
+				if err != nil {
+					return err
+				}
+			}
+
+			if v.Kind == 1 {
+				err := tx.Put(v.K, v.V)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
+// BatchClose close the batch
+func (s *Bolt) BatchClose() error {
+	return nil
 }

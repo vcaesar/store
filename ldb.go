@@ -104,3 +104,45 @@ func (s *Leveldb) ForEach(fn func(k, v []byte) error) error {
 func (s *Leveldb) Close() error {
 	return s.db.Close()
 }
+
+// NewBatch init the db batch
+func (s *Leveldb) NewBatch() error {
+	s.batch = new(leveldb.Batch)
+	return nil
+}
+
+// BatchSet add k, v to the batch
+func (s *Leveldb) BatchSet(k, v []byte) error {
+	s.batch.Put(k, v)
+	return nil
+}
+
+// BatchDelete delete a key in the batch
+func (s *Leveldb) BatchDelete(k []byte) error {
+	s.batch.Delete(k)
+	return nil
+}
+
+// Write write the batch data to db
+func (s *Leveldb) Write(sync ...bool) error {
+	wo := false
+	if len(sync) > 0 {
+		wo = true
+	}
+
+	if s.batch == nil {
+		return nil
+	}
+	err := s.db.Write(s.batch, &opt.WriteOptions{Sync: wo})
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+// BatchClose close the batch
+func (s *Leveldb) BatchClose() error {
+	s.batch.Reset()
+	return nil
+}

@@ -36,20 +36,28 @@ func Register(name string, fn func(path string) (Store, error)) {
 	supportedStore[name] = fn
 }
 
+// Batch set db batch struct
+type Batch struct {
+	K, V []byte
+	Kind uint8
+}
+
 // Store is store interface
 type Store interface {
 	Set(k, v []byte, sync ...bool) error
 	Get(k []byte) ([]byte, error)
 	Delete(k []byte, sync ...bool) error
-	// BatchSet(k, v []byte) error
-	// BatchGet(k []byte) ([]byte, error)
-	// BatchDelete(k []byte) error
-	// Write(snyc ...bool) error
-	// BatchClose() error
 	Has(k []byte) (bool, error)
 	ForEach(fn func(k, v []byte) error) error
 	Close() error
 	WALName() string
+	//
+	NewBatch() error
+	BatchSet(k, v []byte) error
+	// BatchGet(k []byte) ([]byte, error)
+	BatchDelete(k []byte) error
+	Write(snyc ...bool) error
+	BatchClose() error
 }
 
 // Open open the store engine
