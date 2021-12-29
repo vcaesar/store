@@ -28,8 +28,9 @@ import (
 var TestDBName = "./db_test"
 
 func TestBadger(t *testing.T) {
-	db, err := OpenBadger(TestDBName)
-	tt.Expect(t, "<nil>", err)
+	// db, err := OpenBadger(TestDBName)
+	db, err := Open(TestDBName, "badger")
+	tt.Nil(t, err)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -83,8 +84,7 @@ func DBTest(t *testing.T, db Store) {
 		tt.Equal(t, true, has)
 	}
 
-	buf := make([]byte, 100)
-	buf, err = db.Get([]byte("key1"))
+	buf, err := db.Get([]byte("key1"))
 	tt.Nil(t, err)
 	tt.Expect(t, "value1", string(buf))
 
